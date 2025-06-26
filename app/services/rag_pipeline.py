@@ -2,24 +2,26 @@ from langchain_google_genai import ChatGoogleGenerativeAI,GoogleGenerativeAIEmbe
 import os
 from dotenv import load_dotenv
 
-load_dotenv() #load .env
 
-os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
+def rag_pipeline():
+    load_dotenv() #load .env
 
-
-# gemini caht model to get respond from generative ai
-model = ChatGoogleGenerativeAI(model="gemini-2.5-flash",
-# convert_system_message_to_human =True,
-timeout=None,
-max_retries=2 )
+    os.environ["GOOGLE_API_KEY"] = os.getenv("GOOGLE_API_KEY")
 
 
-# demini embedding model to get vector embedding
-gemini_embeddings = GoogleGenerativeAIEmbeddings(
-    model="models/embedding-001"
-    )
+    # gemini caht model to get respond from generative ai
+    model = ChatGoogleGenerativeAI(model="gemini-2.5-flash",
+    # convert_system_message_to_human =True,
+    timeout=None,
+    max_retries=2 )
 
 
-response = model.invoke("hi")
+    # demini embedding model to get vector embedding
+    gemini_embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/embedding-001"
+        )
 
-print(response.content)
+
+    response = model.invoke("hi")
+
+    print(response.content)

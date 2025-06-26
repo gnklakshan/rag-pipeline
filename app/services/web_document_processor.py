@@ -1,6 +1,7 @@
 import bs4
 from langchain_community.document_loaders import WebBaseLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
+
 class loadWebAndSplit:
     def loadWebContents(self,weblinks):
         web_loader = WebBaseLoader(
@@ -14,7 +15,6 @@ class loadWebAndSplit:
     def splitWebContent(self,chunckSize,chunckOverlap,docs):
         splitter = RecursiveCharacterTextSplitter(chunk_size=chunckSize,chunk_overlap=chunckOverlap)
         return splitter.split_documents(docs)
-
 
 
 
