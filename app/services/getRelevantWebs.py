@@ -1,39 +1,31 @@
-# getRelevantWebs.py
-
+# app/services/get_relevant_webs.py
 import os
-from dotenv import load_dotenv
+import logging
 import requests
+from dotenv import load_dotenv
 
-class webContent:
+class WebSearchService:
     def __init__(self):
-        self.url = "https://www.searchapi.io/api/v1/search"
-        self.engine = "duckduckgo"
         load_dotenv()
+        self.duckduckgo_api = os.getenv("DUCKDUCKGO_API")
+        self.search_url = "https://www.searchapi.io/api/v1/search"
+        if not self.duckduckgo_api:
+            raise EnvironmentError("DUCKDUCKGO_API key not set in environment")
 
-    def getWebContents(self,description):
+    def search(self, query, limit=20):
+        """search using DuckDuckGo ."""
         params = {
-            "engine":self.engine,
-            "q":description,
-            "api_key": os.getenv("DUCKDUCKGO_API")
+            "engine": "duckduckgo",
+            "q": query,
+            "api_key": self.duckduckgo_api,
+        }
+        headers = {
+            "User-Agent": os.getenv("USER_AGENT", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
         }
 
-        try:
-            response = requests.get(self.url,params=params)
+        resp = requests.get(self.search_url, params=params, headers=headers, timeout=10)
 
-            if response.status_code == 200:
-                return response.json()
-            else:
-                return {"Error": f"Search failed | Status code: {response.status_code}"}
-        except Exception as e:
-            return {"Error": f"Failed to search from DuckDuckGo | {e}"}
-
-    def toJsonObject(self, response):
-        overview = response.get("organic_results", [])
-        return [{"title": item["title"], "link": item["link"],"content":item["snippet"]} for item in overview]
-
-
-
-
-
-getWeb = webContent()
-print(getWeb.toJsonObject(getWeb.getWebContents("what is chatgpt")))
+        resp.raise_for_status()
+        results = resp.json().get("organic_results", [])
+        logging.info(f"DuckDuckGo returned {len(results)} results")
+        return [r["link"] for r in results][:limit]

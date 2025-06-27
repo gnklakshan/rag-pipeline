@@ -1,30 +1,39 @@
+
 import bs4
-from langchain_community.document_loaders import WebBaseLoader
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_chroma import Chroma
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.document_loaders import WebBaseLoader
+from langchain.vectorstores import Chroma
 
+class WebDocumentProcessor:
+    def __init__(self, chunk_size=1000, chunk_overlap=200):
+        self.chunk_size = chunk_size
+        self.chunk_overlap = chunk_overlap
 
-# web_document_processor.py
+    def load_and_split(self, urls):
+        """Load pages and split them into chunks."""
+        loader = WebBaseLoader(web_paths=urls)
 
-class loadWebAndSplit:
-    def loadWebContents(self,weblinks:list):
-        web_loader = WebBaseLoader(
-            web_paths=weblinks,
-            bs_kwargs = dict(parse_only=bs4.SoupStrainer(class_=("post-content", "post-title", "post-header")))
+        docs = loader.load()
+        if not docs:
+            raise ValueError(f"No content loaded from any of the provided URLs.")
+
+        # filter empty documents
+        valid_docs = []
+        for doc in docs:
+            content = doc.page_content.strip()
+            if content:
+                valid_docs.append(doc)
+            else:
+                print(f"[WARN] Empty page content from: {doc.metadata.get('source')}")
+
+        if not valid_docs:
+            raise ValueError("All loaded documents are empty.")
+
+        splitter = RecursiveCharacterTextSplitter(
+            chunk_size=self.chunk_size,
+            chunk_overlap=self.chunk_overlap
         )
+        return splitter.split_documents(valid_docs)
 
-        docs = web_loader.load()
-
-        return docs
-
-    def splitWebContent(self,chunckSize,chunckOverlap,docs):
-        splitter = RecursiveCharacterTextSplitter(chunk_size=chunckSize,chunk_overlap=chunckOverlap)
-        return splitter.split_documents(docs)
-
-    def saveToVectorStore(self,documents,embedingModel):
-        return Chroma.from_documents(
-            documents=documents,
-            embedding=embedingModel
-        )
-
-
+    def to_vectorstore(self, docs, embedding_model):
+        return Chroma.from_documents(docs, embedding=embedding_model)
